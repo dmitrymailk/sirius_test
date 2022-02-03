@@ -1,0 +1,6 @@
+wandb/
+data/
+artifacts/
+*.ini
+*.pt
+*.pyc
