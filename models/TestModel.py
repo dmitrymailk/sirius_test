@@ -14,4 +14,4 @@ class TestModel(nn.Module):
         return x
     
     def test(self):
-        print("testt2")
+        print("testt1")
