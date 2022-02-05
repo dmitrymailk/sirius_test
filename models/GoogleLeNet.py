@@ -30,12 +30,13 @@ class Inception(nn.Module):
         return torch.cat((p1, p2, p3, p4), dim=1)
 
 class GoogleLeNet(nn.Module):
-    def __init__(self, n_classes=None, conv_arch=None):
+    def __init__(self, n_classes=None):
         super(GoogleLeNet, self).__init__()
 
+        self.n_classes = n_classes
 
         self.block1 = nn.Sequential(
-            nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3),
+            nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
 
@@ -66,7 +67,7 @@ class GoogleLeNet(nn.Module):
             nn.Flatten())
 
         self.conv = nn.Sequential(self.block1, self.block2, self.block3, self.block4, self.block5)
-        self.classifier = nn.Linear(1024, 12)
+        self.classifier = nn.Linear(1024, self.n_classes)
     
     def forward(self, x):
         x = self.conv(x)
