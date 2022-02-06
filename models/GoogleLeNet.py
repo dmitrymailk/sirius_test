@@ -4,8 +4,8 @@ from torch.nn import functional as F
 
 class Inception(nn.Module):
     # `c1`--`c4` are the number of output channels for each path
-    def __init__(self, in_channels, c1, c2, c3, c4, **kwargs):
-        super(Inception, self).__init__(**kwargs)
+    def __init__(self, in_channels, c1, c2, c3, c4,):
+        super(Inception, self).__init__()
         # Path 1 
         self.p1_1 = nn.Conv2d(in_channels, c1, kernel_size=1)
         
@@ -33,7 +33,7 @@ class Inception(nn.Module):
         self.b_norm_4 = nn.BatchNorm2d(c4)
         
         # regularization
-        self.drop_1 = nn.Dropout2d(0.4)
+        self.drop_1 = nn.Dropout(0.1)
 
     def forward(self, x):
         # path 1
@@ -44,7 +44,7 @@ class Inception(nn.Module):
 
         # path 2
         p2 = self.p2_1(x)
-        p2 = self.drop_1(p2)
+        # p2 = self.drop_1(p2)
         p2 = self.b_norm_2_1(p2)
         p2 = F.relu(p2)
 
@@ -55,7 +55,7 @@ class Inception(nn.Module):
 
         # path 3 
         p3 = self.p3_1(x)
-        p3 = self.drop_1(p3)
+        # p3 = self.drop_1(p3)
         p3 = self.b_norm_3_1(p3)
         p3 = F.relu(p3)
         
@@ -84,13 +84,15 @@ class GoogleLeNet(nn.Module):
             nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
             nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+            nn.AvgPool2d(kernel_size=3, stride=2, padding=1))
 
         self.block2 = nn.Sequential(
             nn.Conv2d(64, 64, kernel_size=1),
+            nn.Dropout(0.1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.Conv2d(64, 192, kernel_size=3, padding=1),
+            nn.Dropout(0.1),
             nn.BatchNorm2d(192),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
@@ -101,9 +103,11 @@ class GoogleLeNet(nn.Module):
 
         # block 4
         block_4_inception_1 = 480, 192, (96, 208), (16, 48), 64
+        block_4_inception_2 = 512, 160, (112, 224), (24, 64), 64
 
         # block 5
         block_5_inception_1 = 512, 256, (160, 320), (32, 128), 128
+        block_5_inception_2 = 832, 384, (192, 384), (48, 128), 128
         
         self.block3 = nn.Sequential(
             Inception(*block_3_inception_1),
@@ -114,16 +118,24 @@ class GoogleLeNet(nn.Module):
         self.block4 = nn.Sequential(
             Inception(*block_4_inception_1),
             nn.BatchNorm2d(512),
+            Inception(*block_4_inception_2),
+            nn.BatchNorm2d(512),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
 
         self.block5 = nn.Sequential(
             Inception(*block_5_inception_1),
             nn.BatchNorm2d(832),
+            Inception(*block_5_inception_2),
+            nn.BatchNorm2d(1024),
             nn.AdaptiveAvgPool2d((1,1)),
             nn.Flatten())
 
         self.conv = nn.Sequential(self.block1, self.block2, self.block3, self.block4, self.block5)
-        self.classifier = nn.Linear(832, self.n_classes)
+        self.classifier = nn.Sequential(
+            nn.Dropout(0.2),
+            nn.BatchNorm1d(1024),
+            nn.Linear(1024, self.n_classes)
+        )
     
     def forward(self, x):
         x = self.conv(x)
