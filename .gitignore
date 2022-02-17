@@ -3,4 +3,5 @@ data/
 artifacts/
 *.ini
 *.pt
+*.pth
 *.pyc

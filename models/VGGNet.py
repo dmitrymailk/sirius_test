@@ -11,9 +11,10 @@ class VGGNet(nn.Module):
 
         self.classifier = nn.Sequential(nn.Flatten(),
             # The fully-connected part
-            nn.Linear(conv_arch[-1][1] * 4 * 4, 200), nn.ReLU(), nn.Dropout(0.4),
+            nn.Linear(conv_arch[-1][1] * 4 * 4, 200), nn.ReLU(), nn.Dropout(0.3),
             nn.BatchNorm1d(200),
-            nn.Linear(200, 100), nn.ReLU(), nn.Dropout(0.4),
+            nn.Linear(200, 100), nn.ReLU(), 
+            # nn.Dropout(0.3),
             nn.BatchNorm1d(100),
             nn.Linear(100, 10))
         
@@ -32,12 +33,12 @@ class VGGNet(nn.Module):
         for _ in range(num_convs):
             layers.extend([
                 nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-                nn.Dropout(0.1),
+                # nn.Dropout(0.1),
                 nn.BatchNorm2d(out_channels),
                 nn.ReLU()
             ])
             in_channels = out_channels
-        layers.append(nn.AvgPool2d(kernel_size=2,stride=2))
+        layers.append(nn.MaxPool2d(kernel_size=2,stride=2))
         return nn.Sequential(*layers)
 
     def forward(self, x):
